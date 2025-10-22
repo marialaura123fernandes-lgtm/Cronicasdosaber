@@ -286,3 +286,189 @@ function startMemoryGame() {
         const cardElement = document.createElement('div');
         cardElement.classList.add('memory-card');
         cardElement.dataset.cover = cover;
+        cardElement.innerHTML = `<div class="card-front"><img src="${cover}" alt="Capa de Livro"></div><div class="card-back">?</div>`;
+        cardElement.addEventListener('click', flipCard);
+        memoryGameBoard.appendChild(cardElement);
+    });
+    switchScreen(memoryGameScreen);
+}
+
+function flipCard() {
+    if (memoryGame.lockBoard || this === memoryGame.firstCard) return;
+    this.classList.add('flipped');
+    if (!memoryGame.firstCard) {
+        memoryGame.firstCard = this;
+        return;
+    }
+    memoryGame.secondCard = this;
+    memoryGame.lockBoard = true;
+    checkForMatch();
+}
+
+function checkForMatch() {
+    const isMatch = memoryGame.firstCard.dataset.cover === memoryGame.secondCard.dataset.cover;
+    isMatch ? disableCards() : unflipCards();
+}
+
+function disableCards() {
+    memoryGame.firstCard.removeEventListener('click', flipCard);
+    memoryGame.secondCard.removeEventListener('click', flipCard);
+    memoryGame.firstCard.classList.add('matched');
+    memoryGame.secondCard.classList.add('matched');
+    memoryGame.matchesFound++;
+    if (memoryGame.matchesFound === memoryGame.totalPairs) {
+        setTimeout(() => continueToNextPhaseButton.classList.remove('hidden'), 800);
+    }
+    resetBoard();
+}
+
+function unflipCards() {
+    setTimeout(() => {
+        memoryGame.firstCard.classList.remove('flipped');
+        memoryGame.secondCard.classList.remove('flipped');
+        resetBoard();
+    }, 1200);
+}
+
+function resetBoard() {
+    [memoryGame.firstCard, memoryGame.secondCard] = [null, null];
+    memoryGame.lockBoard = false;
+}
+
+function endGame(isVictory, customMessage = "") {
+    switchScreen(endScreen);
+    endTitle.textContent = isVictory ? "Vitória!" : "Fim de Jogo";
+    endMessage.textContent = customMessage || (isVictory ? "Você venceu!" : "A escuridão prevaleceu. A princesa Sofia foi derrotada, mas a esperança ainda vive. Tente novamente!");
+}
+
+function updateUI() {
+    playerHpText.textContent = Math.ceil(Math.max(0, state.player.hp));
+    playerHpBar.style.width = `${(Math.max(0, state.player.hp) / state.player.maxHp) * 100}%`;
+    pagesCollectedEl.textContent = state.pagesCollected;
+    hintCountEl.textContent = state.player.hints;
+    if(!combatView.classList.contains('hidden')) {
+        enemyHpText.textContent = Math.max(0, state.enemy.hp);
+        enemyHpBar.style.width = `${(Math.max(0, state.enemy.hp) / state.enemy.maxHp) * 100}%`;
+    }
+}
+
+function startPlatformerStage() {
+    switchScreen(platformerScreen);
+
+    // --- CORREÇÃO AQUI ---
+    // Define a resolução INTERNA do canvas como 700x400
+    // O CSS que corrigimos antes (width: 100%, height: auto)
+    // vai escalar este canvas para caber na tela do celular.
+    platformerCanvas.width = 700;
+    platformerCanvas.height = 400;
+    // --- FIM DA CORREÇÃO ---
+
+    const playerImg = new Image();
+    playerImg.src = characterAssets.player;
+    const stars = Array.from({ length: 100 }, () => ({ x: Math.random() * platformerCanvas.width, y: Math.random() * platformerCanvas.height, radius: Math.random() * 1.5, opacity: Math.random() }));
+    platformerState = { player: { x: 50, y: 300, width: 40, height: 50, speed: 4, velocityX: 0, velocityY: 0, jumping: false, grounded: false }, gravity: 0.6, friction: 0.8, keys: {}, platforms: [ { x: 0, y: 380, width: 150, height: 20, type: 'static' }, { x: 200, y: 320, width: 100, height: 20, type: 'moving', speed: 0.8, direction: 1, range: 50, startX: 200 }, { x: 350, y: 250, width: 100, height: 20, type: 'static' }, { x: 500, y: 200, width: 100, height: 20, type: 'static' }, { x: 400, y: 120, width: 100, height: 20, type: 'static' } ], book: { x: 425, y: 70, width: 50, height: 50, glow: 10 }, assets: { player: playerImg }, stars: stars };
+    document.addEventListener('keydown', platformerKeyDown);
+    document.addEventListener('keyup', platformerKeyUp);
+    cancelAnimationFrame(animationFrameId);
+    platformerLoop();
+}
+
+function platformerKeyDown(e) { platformerState.keys[e.code] = true; }
+function platformerKeyUp(e) { platformerState.keys[e.code] = false; }
+
+function checkCollision(shapeA, shapeB) {
+    const vX = (shapeA.x + (shapeA.width / 2)) - (shapeB.x + (shapeB.width / 2));
+    const vY = (shapeA.y + (shapeA.height / 2)) - (shapeB.y + (shapeB.height / 2));
+    const hWidths = (shapeA.width / 2) + (shapeB.width / 2);
+    const hHeights = (shapeA.height / 2) + (shapeB.height / 2);
+    let colDir = null;
+    if (Math.abs(vX) < hWidths && Math.abs(vY) < hHeights) {
+        const oX = hWidths - Math.abs(vX), oY = hHeights - Math.abs(vY);
+        if (oX >= oY) {
+            if (vY > 0) { colDir = "top"; shapeA.y += oY; } else { colDir = "bottom"; shapeA.y -= oY; }
+        } else {
+            if (vX > 0) { colDir = "left"; shapeA.x += oX; } else { colDir = "right"; shapeA.x -= oX; }
+        }
+    }
+    return colDir;
+}
+
+function platformerLoop() {
+    const player = platformerState.player;
+    const keys = platformerState.keys;
+    if (keys['ArrowRight'] || keys['KeyD']) { if (player.velocityX < player.speed) { player.velocityX++; } }
+    if (keys['ArrowLeft'] || keys['KeyA']) { if (player.velocityX > -player.speed) { player.velocityX--; } }
+    if ((keys['Space'] || keys['ArrowUp'] || keys['KeyW']) && !player.jumping && player.grounded) {
+        player.jumping = true;
+        player.grounded = false;
+        player.velocityY = -player.speed * 2.5;
+    }
+    player.velocityX *= platformerState.friction;
+    player.velocityY += platformerState.gravity;
+    player.grounded = false;
+    platformerState.platforms.forEach(platform => {
+         if (platform.type === 'moving') {
+             platform.x += platform.speed * platform.direction;
+             if (platform.x > platform.startX + platform.range || platform.x < platform.startX) { platform.direction *= -1; }
+         }
+        const dir = checkCollision(player, platform);
+        if (dir === "left" || dir === "right") { player.velocityX = 0; } 
+        else if (dir === "bottom") { 
+            player.grounded = true; 
+            player.jumping = false;
+            if (platform.type === 'moving') { player.x += platform.speed * platform.direction; }
+        } 
+        else if (dir === "top") { player.velocityY = 0; }
+    });
+    player.x += player.velocityX;
+    player.y += player.velocityY;
+    if(player.grounded){ player.velocityY = 0; }
+    if (player.x < 0) player.x = 0;
+    if (player.x + player.width > platformerCanvas.width) player.x = platformerCanvas.width - player.width;
+    if (player.y > platformerCanvas.height) { player.x = 50; player.y = 300; player.velocityX = 0; player.velocityY = 0; }
+    ctx.clearRect(0, 0, platformerCanvas.width, platformerCanvas.height);
+    ctx.fillStyle = "white";
+    platformerState.stars.forEach(star => { ctx.globalAlpha = star.opacity; ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2); ctx.fill(); });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#a37b4c";
+    platformerState.platforms.forEach(platform => { ctx.fillRect(platform.x, platform.y, platform.width, platform.height); });
+    ctx.save();
+    ctx.shadowColor = 'rgba(255, 255, 150, 0.8)';
+    ctx.shadowBlur = platformerState.book.glow;
+    ctx.font = "50px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const bookX = platformerState.book.x + platformerState.book.width / 2;
+    const bookY = platformerState.book.y + platformerState.book.height / 2;
+    ctx.fillText('📖', bookX, bookY);
+    ctx.restore();
+    platformerState.book.glow = 10 + Math.sin(Date.now() / 300) * 5;
+    ctx.drawImage(platformerState.assets.player, player.x, player.y, player.width, player.height);
+    if (checkCollision(player, platformerState.book)) {
+        document.removeEventListener('keydown', platformerKeyDown);
+        document.removeEventListener('keyup', platformerKeyUp);
+        cancelAnimationFrame(animationFrameId);
+        switchScreen(epilogueScreen);
+        return;
+    }
+    animationFrameId = requestAnimationFrame(platformerLoop);
+}
+
+// --- EVENT LISTENERS ---
+document.addEventListener('DOMContentLoaded', () => {
+    switchScreen(startScreen);
+    populatePhaseMenu();
+});
+startButton.addEventListener('click', startGame);
+restartButton.addEventListener('click', startGame);
+challengeButton.addEventListener('click', startCombat);
+useHintButton.addEventListener('click', useHint);
+backToStartButton.addEventListener('click', () => {
+    populatePhaseMenu();
+    switchScreen(startScreen);
+});
+continueToNextPhaseButton.addEventListener('click', () => {
+    state.currentPhaseIndex++;
+    loadPhase(state.currentPhaseIndex);
+    switchScreen(gameScreen);
+});
