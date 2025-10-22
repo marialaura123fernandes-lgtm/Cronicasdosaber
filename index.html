@@ -20,11 +20,13 @@
             <p class="text-lg md:text-xl font-cinzel mb-8">O Destino de um Reino em suas Mãos</p>
             
             <div class="max-w-2xl text-left bg-black bg-opacity-30 p-6 rounded-lg border border-amber-800">
-                <h2 class="text-2xl font-cinzel text-amber-400 mb-4">A Lenda</h2>
-                <p class="mb-4 text-gray-300">Era uma vez, em um lugar distante, um reino próspero e feliz. Até que um dia, um dragão feroz e seus capangas trouxeram a escuridão,
-                espalhando o medo.</p>
-                <p class="text-gray-300">Uma guerreira , chamada Atena, ergue-se como a última esperança. Para trazer a paz, ela deve desvendar os segredos de um livro mágico, página por página, 
-                enfrentando os monstros com o poder do conhecimento. Embarque nesta jornada e defina o destino deste reino!</p>
+                <h2 class="text-2xl font-cinzel text-amber-400 mb-4">Bem-vindo(a) a Crônicas do Saber! </h2>
+                <p class="mb-4 text-gray-300">A Jornada: Você deverá desvendar os segredos de um antigo Livro Mágico, recuperando suas páginas perdidas.<br>
+                Recursos: Atena possui algumas Dicas que podem ajudar nas perguntas mais difíceis, mas use-as com sabedoria!</p>
+                <p class="text-gray-300">Derrota e Vitória: Acerte as respostas para causar dano. Erre, e Atena sofrerá as consequências.<br>
+                Minigames: Após cada vitória, você precisará reconstruir a página recuperada em um desafio de memória, fortalecendo o poder do livro.</p>
+                 <p class="text-gray-300">O Objetivo Final: Avance pelas fases, derrote todos os guardiões e enfrente 
+                 o Dragão das Sombras para trazer a luz de volta ao reino.</p>
             </div>
 
             <div id="phase-selection-container" class="max-w-2xl w-full mt-6">
@@ -34,6 +36,48 @@
             </div>
 
             <button id="start-button" class="btn-primary font-cinzel text-2xl py-3 px-8 rounded-lg mt-8">Iniciar Jornada</button>
+        </div>
+
+        <div id="intro-crawl-screen" class="screen hidden flex-grow flex flex-col justify-center items-center p-4">
+            <div class="crawl-perspective">
+                <div class="crawl-content">
+                    <h2 class="text-3xl font-cinzel text-amber-300 mb-8 text-glow">A Lenda...</h2>
+                    <p class="mb-4">Era uma vez, em um lugar distante, um reino próspero e feliz.</p>
+                    <p class="mb-4">Até que um dia, um dragão feroz e seus capangas trouxeram a escuridão, espalhando o medo.</p>
+                    <p class="mb-4">Uma guerreira, chamada Atena, ergue-se como a última esperança.</p>
+                    <p class="mb-4">Para trazer a paz, ela deve desvendar os segredos de um livro mágico, página por página, enfrentando os monstros com o poder do conhecimento.</p>
+                    <p class="mt-6 font-bold text-amber-200">Embarque nesta jornada e defina o destino deste reino!</p>
+                </div>
+            </div>
+            <button id="skip-intro-button" class="btn-primary font-cinzel text-lg py-2 px-6 rounded-lg mt-8 absolute bottom-10">
+                Pular
+            </button>
+        </div>
+
+        <div id="battle-intro-screen" class="screen hidden flex-grow flex flex-col justify-center items-center p-4">
+            <h2 id="battle-intro-title" class="text-4xl font-cinzel text-amber-300 mb-8 text-glow text-center"></h2>
+            <div class="battle-intro-arena w-full max-w-xl bg-black bg-opacity-30 rounded-lg p-6 flex justify-around items-center border-2 border-amber-800 relative overflow-hidden min-h-[250px] md:min-h-[350px]">
+                <div id="intro-player-sprite" class="battle-intro-sprite player-side">
+                    <img src="" alt="Atena" class="max-h-full">
+                </div>
+                <span class="font-cinzel text-5xl text-red-500 z-10 battle-intro-vs">VS</span>
+                <div id="intro-enemy-sprite" class="battle-intro-sprite enemy-side">
+                    <img src="" alt="Inimigo" class="max-h-full">
+                </div>
+                <div class="battle-intro-hp-container player-hp-intro-position">
+                    <div class="hp-bar-container w-full h-4">
+                        <div class="hp-bar hp-bar-player" style="width: 100%;"></div>
+                    </div>
+                    <p class="text-sm text-center mt-1">Atena</p>
+                </div>
+                <div class="battle-intro-hp-container enemy-hp-intro-position">
+                    <div class="hp-bar-container w-full h-4">
+                        <div class="hp-bar" style="width: 100%;"></div>
+                    </div>
+                    <p class="text-sm text-center mt-1"><span id="intro-enemy-name"></span></p>
+                </div>
+            </div>
+            <p id="battle-intro-message" class="text-lg text-gray-300 mt-6"></p>
         </div>
 
         <div id="game-screen" class="screen hidden flex-grow flex flex-col">
@@ -68,14 +112,12 @@
                     <p class="text-sm text-right mt-1"><span id="enemy-hp-text">5</span> / 5 HP</p>
                 </div>
             </div>
+            
             <div id="main-content-area" class="flex-grow flex flex-col justify-center items-center bg-black bg-opacity-20 p-6 rounded-lg border border-amber-800">
-                <div id="narrative-view" class="text-center">
-                    <div id="narrative-enemy-image-container" class="w-32 h-32 md:w-48 md:h-48 mx-auto mb-6 flex items-center justify-center relative pop-in">
-                        <img id="narrative-enemy-image" src="" alt="Imagem do Vilão" class="max-w-full max-h-full object-contain filter drop-shadow-lg" style="animation: float 3s ease-in-out infinite;">
-                    </div>
-                    <p id="narrative-text" class="text-lg mb-8 text-gray-300"></p>
-                    <button id="challenge-button" class="btn-primary font-cinzel text-xl py-2 px-6 rounded-lg"></button>
+                <div id="narrative-view" class="text-center hidden"> 
+                    {/* */}
                 </div>
+                
                 <div id="combat-view" class="hidden w-full max-w-3xl text-center">
                     <div id="character-sprites" class="flex justify-between items-center mb-4 px-2 sm:px-8 h-40">
                         <div id="player-sprite-container" class="sprite-container" style="--scale-x: -1;"></div>
@@ -117,20 +159,34 @@
             <button id="restart-button" class="btn-primary font-cinzel text-2xl py-3 px-8 rounded-lg">Jogar Novamente</button>
         </div>
         
-        <div id="platformer-screen" class="screen hidden text-center flex-grow flex flex-col justify-center items-center p-2">
-            <h2 class="text-3xl font-cinzel text-amber-300 mb-2 text-glow">Fase Bônus: A Senda do Conhecimento</h2>
-            <p class="mb-4 text-lg">Use as setas para mover e a Barra de Espaço para pular. Alcance o Livro Mágico!</p>
+        <div id="final-platformer-screen" class="screen hidden text-center flex-grow flex flex-col justify-center items-center p-2 relative">
+            <h2 class="text-3xl font-cinzel text-amber-300 mb-2 text-glow">O Caminho Final</h2>
+            <p class="mb-4 text-lg">Supere os últimos obstáculos e alcance a porta para a paz!</p>
             <canvas id="platformer-canvas" class="border-2 border-amber-800 rounded-lg"></canvas>
+            
+            <div id="mobile-controls" class="fixed bottom-4 left-0 right-0 flex justify-between px-4 sm:hidden z-30"> 
+                {/* */}
+                <div class="space-x-4">
+                    <button id="btn-left" class="mobile-btn bg-amber-600/70 p-4 rounded-full text-white text-2xl">◀</button>
+                    <button id="btn-right" class="mobile-btn bg-amber-600/70 p-4 rounded-full text-white text-2xl">▶</button>
+                </div>
+                <button id="btn-jump" class="mobile-btn bg-blue-600/70 p-5 rounded-full text-white text-2xl">▲</button>
+            </div>
+            <div id="checkpoint-message-box" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-80 border-2 border-amber-500 rounded-lg p-6 max-w-md text-center z-20">
+                <p id="checkpoint-text" class="text-lg text-amber-200 mb-4"></p>
+                <button id="continue-platformer-button" class="btn-primary font-cinzel text-lg py-2 px-6 rounded-lg">Continuar</button>
+            </div>
         </div>
 
         <div id="epilogue-screen" class="screen hidden text-center flex-grow flex flex-col justify-center items-center p-4">
             <div class="epilogue-sofia-image mb-6">
-                <img src="https://api.dicebear.com/8.x/lorelei/png?seed=Sofia&flip=true&backgroundColor=c0aede,d1d4f9" alt="Princesa Sofia vitoriosa">
+                {/* */}
+                <img src="images/atena.png" alt="Atena vitoriosa"> 
             </div>
             <div class="max-w-xl text-center bg-black bg-opacity-40 p-6 rounded-lg border-2 border-amber-500">
                 <h2 class="text-3xl font-cinzel text-amber-300 mb-4 text-glow">A Paz foi Restaurada!</h2>
                 <p class="text-gray-200">
-                    Com o poder do conhecimento, a Guerreira Atena desvendou os segredos do Livro Mágico e baniu o Dragão das Sombras para sempre. A luz retornou ao reino, e a sabedoria voltou a florescer.
+                    Com coragem e o poder do conhecimento, Atena superou todos os desafios. O Dragão das Sombras foi banido, e seus lacaios dispersos. A luz retornou ao reino, a sabedoria floresceu novamente, e a paz reinou sob a proteção da heroína.
                 </p>
                 <p class="mt-4 text-amber-200 font-semibold">Obrigado por jogar Crônicas do Saber!</p>
             </div>
