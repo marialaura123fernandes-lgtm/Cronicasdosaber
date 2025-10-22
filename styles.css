@@ -78,8 +78,8 @@ body {
 .progress-bar { transition: width 0.5s linear; }
 
 .sprite-container {
-    width: 10rem;
-    height: 10rem;
+    width: 10rem; /* 160px */
+    height: 10rem; /* 160px */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -118,25 +118,14 @@ body {
     background-color: rgba(20, 20, 40, 0.5);
     border: 1px solid #a37b4c;
     color: #d1d5db;
-    padding: 6px 14px;
+    padding: 8px 18px; /* Mantive a sua segunda regra, que era melhor */
     border-radius: 8px;
     transition: all 0.3s ease;
     font-family: 'Cinzel', serif;
-    font-size: 0.9rem;
+    font-size: 1rem;
     cursor: pointer;
-}
-.btn-phase {
-    background-color: rgba(20, 20, 40, 0.5);
-    border: 1px solid #a37b4c;
-    color: #d1d5db;
-    padding: 8px 18px; /* Aumenta o espaço interno (padding) */
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    font-family: 'Cinzel', serif;
-    font-size: 1rem; /* Aumenta um pouco o tamanho da fonte */
-    cursor: pointer;
-    flex-grow: 1; /* Faz os botões tentarem ocupar o espaço disponível */
-    min-width: 180px; /* Garante uma largura mínima para cada botão */
+    flex-grow: 1;
+    min-width: 180px;
 }
 
 @keyframes shake {
@@ -186,8 +175,8 @@ body {
 
 .memory-card {
     background-color: transparent;
-    width: 100px;
-    height: 140px;
+    width: 100px; /* <- PROBLEMA AQUI */
+    height: 140px; /* <- PROBLEMA AQUI */
     cursor: pointer;
     position: relative;
     transform-style: preserve-3d;
@@ -241,4 +230,52 @@ body {
     0% { transform: translateY(0px); }
     50% { transform: translateY(-15px); }
     100% { transform: translateY(0px); }
+}
+
+/* ============================================== */
+/* === INÍCIO DAS CORREÇÕES PARA RESPONSIVIDADE === */
+/* ============================================== */
+
+@media (max-width: 640px) {
+    /* Diminui o contêiner do jogo para caber melhor */
+    .game-container {
+        min-height: 90vh; /* Altura mínima menor */
+        padding: 0.75rem; /* Menos padding (o p-4 do html será p-3) */
+    }
+
+    /* Diminui os sprites (imagens) do jogador e inimigo na batalha */
+    .sprite-container {
+        width: 6rem; /* 96px (antes era 10rem / 160px) */
+        height: 6rem; /* 96px (antes era 10rem / 160px) */
+    }
+
+    /* Ajusta o contêiner dos sprites para a nova altura */
+    #character-sprites {
+        height: 8rem; /* 128px (antes era 10rem / 160px) */
+    }
+
+    /* Ajusta o jogo da memória */
+    .memory-game-board {
+        gap: 8px; /* Espaço menor entre as cartas */
+        max-width: 100%; /* Garante que não vai vazar */
+    }
+
+    .memory-card {
+        /* Remove o tamanho fixo e faz a carta ser flexível */
+        width: 100%; /* Ocupa 100% da coluna do grid */
+        height: auto; /* Altura automática */
+        aspect-ratio: 10 / 14; /* Mantém a proporção (100 / 140) */
+    }
+
+    .card-back {
+        /* Diminui o ícone de "?" para caber na carta menor */
+        font-size: 2.5rem; /* 40px (antes era 48px) */
+    }
+
+    /* Força o canvas do jogo de plataforma a se limitar à largura da tela */
+    #platformer-canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100%;
+    }
 }
