@@ -327,8 +327,10 @@ function handleAnswer(isCorrect) {
         if (state.enemy.hp <= 0) {
             state.pagesCollected++;
             if (state.currentPhaseIndex >= phases.length - 1) {
+                // Se for a última fase (Dragão), vai para o jogo de plataforma
                 startFinalPlatformerStage(); 
             } else {
+                // Se não, vai para o jogo da memória
                 startMemoryGame();
             }
             return;
@@ -339,6 +341,7 @@ function handleAnswer(isCorrect) {
             return;
         }
 
+        // Se o jogo continua, vai para a próxima pergunta
         state.currentQuestionIndex++;
         nextQuestion();
 
@@ -373,11 +376,154 @@ function useHint() {
     }
 }
 
-// --- JOGO DA MEMÓRIA ---
+// --- JOGO DA MEMÓRIA (CÓDIGO CORRIGIDO E ADICIONADO) ---
 let memoryGame = { firstCard: null, secondCard: null, lockBoard: false, matchesFound: 0, totalPairs: 6 };
-const bookCovers = [ /* ... URLs dos livros ... */ ]; 
+// URLs de imagens de exemplo para os pares de cartas
+const cardImages = [
+    'https://i.imgur.com/4jtQFY2.jpeg', // Espada
+    'https://i.imgur.com/lGPG6Qg.jpeg', // Escudo
+    'https://i.imgur.com/l8MIG27.jpeg', // Poção
+    'https://i.imgur.com/Ov3qLQ1.jpeg', // Chave
+    'https://i.imgur.com/SJm4Y66.jpeg', // Anel
+    'https://i.imgur.com/fUNTp1L.jpeg'  // Pergaminho
+];
 
-// Funções: startMemoryGame, flipCard, checkForMatch, disableCards, unflipCards, resetBoard - Mantidas como antes
+/**
+ * Inicia a tela e a lógica do jogo da memória.
+ */
+function startMemoryGame() {
+    switchScreen(memoryGameScreen);
+    // Esconde o botão de continuar até que o jogo seja ganho
+    if(continueToNextPhaseButton) continueToNextPhaseButton.classList.add('hidden');
+    
+    // Reseta o estado do jogo da memória
+    memoryGame.firstCard = null;
+    memoryGame.secondCard = null;
+    memoryGame.lockBoard = false;
+    memoryGame.matchesFound = 0;
+    memoryGame.totalPairs = cardImages.length; // Garante que o total de pares é dinâmico
+
+    createMemoryBoard();
+}
+
+/**
+ * Cria e embaralha o tabuleiro do jogo da memória.
+ */
+function createMemoryBoard() {
+    if (!memoryGameBoard) return;
+    memoryGameBoard.innerHTML = ''; // Limpa o tabuleiro anterior
+    
+    // Duplica os símbolos para formar pares
+    const allCards = [...cardImages, ...cardImages];
+
+    // Embaralha (Algoritmo Fisher-Yates)
+    for (let i = allCards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
+    }
+
+    // Cria os elementos HTML dos cards
+    allCards.forEach(imageUrl => {
+        const card = document.createElement('div');
+        card.classList.add('memory-card');
+        card.dataset.image = imageUrl; // Guarda a URL da imagem no 'dataset' para verificação
+
+        // Adiciona a frente (imagem) e o verso (livro)
+        card.innerHTML = `
+            <div class="card-front">
+                <img src="${imageUrl}" alt="Símbolo da Carta" style="width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box;">
+            </div>
+            <div class="card-back">
+                📚
+            </div>
+        `;
+        
+        card.addEventListener('click', flipCard);
+        memoryGameBoard.appendChild(card);
+    });
+}
+
+/**
+ * Lógica para virar um card quando clicado.
+ */
+function flipCard() {
+    // 'this' se refere ao 'card' que foi clicado
+    if (memoryGame.lockBoard) return; // Trava o tabuleiro enquanto 2 cartas são checadas
+    if (this === memoryGame.firstCard) return; // Impede clique duplo no mesmo card
+
+    this.classList.add('flipped');
+
+    if (!memoryGame.firstCard) {
+        // Este é o primeiro card virado
+        memoryGame.firstCard = this;
+        return;
+    }
+
+    // Este é o segundo card virado
+    memoryGame.secondCard = this;
+    memoryGame.lockBoard = true; // Trava o tabuleiro
+
+    checkForMatch();
+}
+
+/**
+ * Verifica se os dois cards virados são um par.
+ */
+function checkForMatch() {
+    const isMatch = memoryGame.firstCard.dataset.image === memoryGame.secondCard.dataset.image;
+
+    if (isMatch) {
+        disableCards();
+    } else {
+        unflipCards();
+    }
+}
+
+/**
+ * Chamada se os cards formarem um par.
+ */
+function disableCards() {
+    memoryGame.firstCard.classList.add('matched');
+    memoryGame.secondCard.classList.add('matched');
+
+    // Remove o listener para não serem mais clicáveis
+    memoryGame.firstCard.removeEventListener('click', flipCard);
+    memoryGame.secondCard.removeEventListener('click', flipCard);
+
+    memoryGame.matchesFound++;
+
+    // Verifica se o jogo acabou
+    if (memoryGame.matchesFound === memoryGame.totalPairs) {
+        // Vitória! Mostra o botão para avançar
+        setTimeout(() => {
+            if(continueToNextPhaseButton) {
+                continueToNextPhaseButton.classList.remove('hidden');
+                continueToNextPhaseButton.classList.add('pop-in'); // Adiciona animação (do CSS)
+            }
+        }, 1000); // Espera 1s para mostrar o botão
+    }
+
+    resetTurn();
+}
+
+/**
+ * Chamada se os cards não formarem um par.
+ */
+function unflipCards() {
+    setTimeout(() => {
+        if (memoryGame.firstCard) memoryGame.firstCard.classList.remove('flipped');
+        if (memoryGame.secondCard) memoryGame.secondCard.classList.remove('flipped');
+        resetTurn();
+    }, 1200); // Espera 1.2s antes de virar de volta
+}
+
+/**
+ * Reseta o estado do turno (não o jogo inteiro).
+ */
+function resetTurn() {
+    [memoryGame.firstCard, memoryGame.secondCard] = [null, null];
+    memoryGame.lockBoard = false;
+}
 
 // --- FIM DE JOGO E UI ---
 function endGame(isVictory, customMessage = "") {
@@ -437,7 +583,7 @@ function startFinalPlatformerStage() {
             { x: 580, y: 300, width: 80, height: 20, type: 'movingX', speed: 1.0, direction: 1, range: 60, startX: 580 },
             { x: 600, y: 350, width: 120, height: 20 }, 
             { x: 780, y: 300, width: 60, height: 20, type: 'movingY', speed: 1.2, direction: 1, range: 70, startY: 300 }, 
-            { x: 900, y: 250, width: 100, height: 20 },    
+            { x: 900, y: 250, width: 100, height: 20 },   
             { x: 1050, y: 300, width: 80, height: 20 },
             { x: 1180, y: 310, width: 80, height: 20, type: 'movingY', speed: 0.8, direction: 1, range: 50, startY: 310 },
             { x: 1200, y: 350, width: 150, height: 20 }, 
@@ -458,7 +604,7 @@ function startFinalPlatformerStage() {
             radius: Math.random() * 1.5, 
             opacity: Math.random() * 0.8 + 0.2 
         })), 
-        paused: false,     
+        paused: false,    
         atCheckpoint: false 
     };
     
@@ -509,12 +655,12 @@ function checkCollision(shapeA, shapeB) {
 }
 
 function platformerLoop() {
-     // Verifica se o estado existe antes de tentar acessá-lo
-     if (!platformerState || !platformerState.player) {
-         console.warn("Estado da plataforma não inicializado, parando loop.");
-         cancelAnimationFrame(animationFrameId);
-         return;
-     }
+      // Verifica se o estado existe antes de tentar acessá-lo
+      if (!platformerState || !platformerState.player) {
+           console.warn("Estado da plataforma não inicializado, parando loop.");
+           cancelAnimationFrame(animationFrameId);
+           return;
+      }
 
     if (platformerState.paused) {
         drawPlatformerScene(); 
@@ -564,7 +710,7 @@ function platformerLoop() {
             player.grounded = true; 
             player.jumping = false;
              if (platform.type === 'movingX') { player.x += platform.speed * platform.direction; }
-             if (platform.type === 'movingY' && platform.direction < 0 && player.velocityY >= 0) { 
+              if (platform.type === 'movingY' && platform.direction < 0 && player.velocityY >= 0) { 
                  player.y = platform.y - player.height; 
                  player.velocityY = platform.speed * platform.direction; 
              } else if(platform.type === 'movingY' && platform.direction > 0) {
@@ -739,33 +885,33 @@ function drawPlatformerScene() {
     if (platformerState.book) { // Verifica se book existe
         const bookDrawX = drawRelativeToCamera(platformerState.book);
          if (bookDrawX !== null) {
-            ctx.save();
-            ctx.shadowColor = 'rgba(255, 255, 150, 0.8)';
-            ctx.shadowBlur = platformerState.book.glow;
-            ctx.font = "40px serif"; 
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            const bookXCenter = bookDrawX + platformerState.book.width / 2;
-            const bookYCenter = platformerState.book.y + platformerState.book.height / 2;
-            ctx.fillText('📖', bookXCenter, bookYCenter); 
-            ctx.restore();
-            platformerState.book.glow = 10 + Math.sin(Date.now() / 300) * 5; 
-        }
+             ctx.save();
+             ctx.shadowColor = 'rgba(255, 255, 150, 0.8)';
+             ctx.shadowBlur = platformerState.book.glow;
+             ctx.font = "40px serif"; 
+             ctx.textAlign = "center";
+             ctx.textBaseline = "middle";
+             const bookXCenter = bookDrawX + platformerState.book.width / 2;
+             const bookYCenter = platformerState.book.y + platformerState.book.height / 2;
+             ctx.fillText('📖', bookXCenter, bookYCenter); 
+             ctx.restore();
+             platformerState.book.glow = 10 + Math.sin(Date.now() / 300) * 5; 
+         }
     }
     
     // Porta
     if (platformerState.door) { // Verifica se door existe
         const doorDrawX = drawRelativeToCamera(platformerState.door);
          if (doorDrawX !== null) {
-            ctx.fillStyle = "#6F4E37"; 
-            ctx.fillRect(doorDrawX, platformerState.door.y, platformerState.door.width, platformerState.door.height);
-            ctx.fillStyle = "#4d3a25"; 
-            ctx.fillRect(doorDrawX + 5, platformerState.door.y + 5, platformerState.door.width - 10, platformerState.door.height - 10); 
-            ctx.fillStyle = "#FAD02C"; 
-            ctx.beginPath();
-            ctx.arc(doorDrawX + platformerState.door.width * 0.8, platformerState.door.y + platformerState.door.height * 0.5, 4, 0, Math.PI * 2); 
-            ctx.fill();
-        }
+             ctx.fillStyle = "#6F4E37"; 
+             ctx.fillRect(doorDrawX, platformerState.door.y, platformerState.door.width, platformerState.door.height);
+             ctx.fillStyle = "#4d3a25"; 
+             ctx.fillRect(doorDrawX + 5, platformerState.door.y + 5, platformerState.door.width - 10, platformerState.door.height - 10); 
+             ctx.fillStyle = "#FAD02C"; 
+             ctx.beginPath();
+             ctx.arc(doorDrawX + platformerState.door.width * 0.8, platformerState.door.y + platformerState.door.height * 0.5, 4, 0, Math.PI * 2); 
+             ctx.fill();
+         }
     }
 
     // Jogador (Atena)
@@ -811,10 +957,10 @@ function handleTouchStart(e) {
 function handleTouchEnd(e) {
     e.preventDefault();
      if (platformerState && platformerState.keys) {
-        // Desliga TODAS as teclas simuladas quando qualquer botão de toque é solto
-        platformerState.keys['ArrowLeft'] = false;
-        platformerState.keys['ArrowRight'] = false;
-        platformerState.keys['Space'] = false; 
+         // Desliga TODAS as teclas simuladas quando qualquer botão de toque é solto
+         platformerState.keys['ArrowLeft'] = false;
+         platformerState.keys['ArrowRight'] = false;
+         platformerState.keys['Space'] = false; 
      }
 }
 
@@ -842,9 +988,9 @@ function addMobileControlListeners() {
 
 function removeMobileControlListeners() {
      mobileListeners.forEach(listener => {
-        if (listener.element) {
-           listener.element.removeEventListener(listener.type, listener.handler);
-        }
+         if (listener.element) {
+            listener.element.removeEventListener(listener.type, listener.handler);
+         }
      });
 }
 
@@ -868,7 +1014,9 @@ if(backToStartButton) {
 
 if(continueToNextPhaseButton) {
     continueToNextPhaseButton.addEventListener('click', () => {
+        // Esta é a lógica de progressão de nível
         state.currentPhaseIndex++;
+        // Inicia a animação de batalha, que por sua vez chama startCombat()
         playBattleIntroAnimation(startCombat);
     });
 }
